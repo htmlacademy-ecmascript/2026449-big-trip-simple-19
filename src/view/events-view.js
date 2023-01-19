@@ -4,7 +4,7 @@ import { DATE_FORMAT } from '../const.js';
 import { names } from '../mock/destinations.js';
 import { getRandomArrayElement } from '../utils.js';
 
-function createOfferTemplate (event) {
+function createOfferTemplate(event) {
   if (!event.offers || !Object.keys(event.offers).length) {
     return '<li class="event__offer">No additional offers</li>';
   }
@@ -58,23 +58,26 @@ function createEventsTemplate(event) {
 }
 
 export default class EventsView {
+  #event = null;
+  #element = null;
+
   constructor({ event }) {
-    this.event = event;
+    this.#event = event;
   }
 
-  getTemplate() {
-    return createEventsTemplate(this.event);
+  get template() {
+    return createEventsTemplate(this.#event);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template);
     }
 
-    return this.element;
+    return this.#element;
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }
