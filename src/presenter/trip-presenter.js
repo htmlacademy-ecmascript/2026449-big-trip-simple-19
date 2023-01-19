@@ -4,10 +4,12 @@ import EventView from '../view/events-view.js';
 import SortView from '../view/sort-view.js';
 import EventListView from '../view/events-list-view.js';
 import EventEditView from '../view/event-edit-view.js';
+import NoEventsView from '../view/no-events-view.js';
 
 export default class TripPresenter {
   #events = [];
   #eventListView = new EventListView();
+  #noEventsView = new NoEventsView();
   #filterContainer = null;
   #siteMainContainer = null;
   #eventModel = null;
@@ -21,17 +23,22 @@ export default class TripPresenter {
   init() {
     this.#events = [...this.#eventModel.event];
     render(new FilterView(), this.#filterContainer);
-    render(new SortView(), this.#siteMainContainer);
-    render(this.#eventListView, this.#siteMainContainer);
 
-    for (let i = 0; i < this.#events.length; i++) {
-      this.#renderEvent(this.#events[i]);
+    if (!this.#events.length) {
+      render(this.#noEventsView, this.#siteMainContainer);
+    } else {
+      render(new SortView(), this.#siteMainContainer);
+      render(this.#eventListView, this.#siteMainContainer);
+
+      for (let i = 0; i < this.#events.length; i++) {
+        this.#renderEvent(this.#events[i]);
+      }
     }
   }
 
   #renderEvent(event) {
-    const eventComponent = new EventView({event});
-    const eventEditComponent = new EventEditView({event});
+    const eventComponent = new EventView({ event });
+    const eventEditComponent = new EventEditView({ event });
 
     const replaceCardToForm = () => {
       this.#eventListView.element.replaceChild(eventEditComponent.element, eventComponent.element);
