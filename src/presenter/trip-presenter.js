@@ -6,24 +6,65 @@ import EventListView from '../view/events-list-view.js';
 import EventEditView from '../view/event-edit-view.js';
 
 export default class TripPresenter {
-  EventListView = new EventListView();
-  EVENTS_COUNT = 3;
+  #events = [];
+  #eventListView = new EventListView();
+  #filterContainer = null;
+  #siteMainContainer = null;
+  #eventModel = null;
 
   constructor({ filterContainer, siteMainContainer, eventModel }) {
-    this.filterContainer = filterContainer;
-    this.siteMainContainer = siteMainContainer;
-    this.eventModel = eventModel;
+    this.#filterContainer = filterContainer;
+    this.#siteMainContainer = siteMainContainer;
+    this.#eventModel = eventModel;
   }
 
   init() {
-    this.event = [...this.eventModel.getEvent()];
-    render(new FilterView(), this.filterContainer);
-    render(new SortView(), this.siteMainContainer);
-    render(this.EventListView, this.siteMainContainer);
-    render(new EventEditView({ event: this.event[0] }), this.EventListView.getElement());
+    this.#events = [...this.#eventModel.event];
+    render(new FilterView(), this.#filterContainer);
+    render(new SortView(), this.#siteMainContainer);
+    render(this.#eventListView, this.#siteMainContainer);
 
-    for (let i = 1; i < this.event.length; i++) {
-      render(new EventView({ event: this.event[i] }), this.EventListView.getElement());
+    for (let i = 0; i < this.#events.length; i++) {
+      this.#renderEvent(this.#events[i]);
     }
+  }
+
+  #renderEvent(event) {
+    const eventComponent = new EventView({event});
+    const eventEditComponent = new EventEditView({event});
+
+    const replaceCardToForm = () => {
+      this.#eventListView.element.replaceChild(eventEditComponent.element, eventComponent.element);
+    };
+
+    const replaceFormToCard = () => {
+      this.#eventListView.element.replaceChild(eventComponent.element, eventEditComponent.element);
+    };
+
+    const escKeyDownHandler = (evt) => {
+      if (evt.key === 'Escape' || evt.key === 'Esc') {
+        evt.preventDefault();
+        replaceFormToCard();
+        document.removeEventListener('keydown', escKeyDownHandler);
+      }
+    };
+
+    eventComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+      replaceCardToForm();
+      document.addEventListener('keydown', escKeyDownHandler);
+    });
+
+    eventEditComponent.element.querySelector('form').addEventListener('submit', (evt) => {
+      evt.preventDefault();
+      replaceFormToCard();
+      document.removeEventListener('keydown', escKeyDownHandler);
+    });
+
+    eventEditComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+      replaceFormToCard();
+      document.removeEventListener('keydown', escKeyDownHandler);
+    });
+
+    render(eventComponent, this.#eventListView.element);
   }
 }

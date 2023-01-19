@@ -1,4 +1,4 @@
-import {render} from './render.js';
+import { render } from './render.js';
 import NewEventButtonView from './view/new-event-button-view.js';
 import TripPresenter from './presenter/trip-presenter.js';
 import EventModel from './model/events-model.js';
