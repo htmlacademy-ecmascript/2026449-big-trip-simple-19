@@ -1,4 +1,4 @@
-import { render } from '../render.js';
+import { render, replace } from '../framework/render.js';
 import FilterView from '../view/filter-view.js';
 import EventView from '../view/events-view.js';
 import SortView from '../view/sort-view.js';
@@ -37,40 +37,41 @@ export default class TripPresenter {
   }
 
   #renderEvent(event) {
-    const eventComponent = new EventView({ event });
-    const eventEditComponent = new EventEditView({ event });
-
-    const replaceCardToForm = () => {
-      this.#eventListView.element.replaceChild(eventEditComponent.element, eventComponent.element);
-    };
-
-    const replaceFormToCard = () => {
-      this.#eventListView.element.replaceChild(eventComponent.element, eventEditComponent.element);
-    };
-
     const escKeyDownHandler = (evt) => {
       if (evt.key === 'Escape' || evt.key === 'Esc') {
         evt.preventDefault();
-        replaceFormToCard();
+        replaceFormToCard.call(this);
         document.removeEventListener('keydown', escKeyDownHandler);
       }
     };
 
-    eventComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
-      replaceCardToForm();
-      document.addEventListener('keydown', escKeyDownHandler);
+    const eventComponent = new EventView({
+      event,
+      onEditClick: () => {
+        replaceCardToForm.call(this);
+        document.addEventListener('keydown', escKeyDownHandler);
+      }
     });
 
-    eventEditComponent.element.querySelector('form').addEventListener('submit', (evt) => {
-      evt.preventDefault();
-      replaceFormToCard();
-      document.removeEventListener('keydown', escKeyDownHandler);
+    const eventEditComponent = new EventEditView({
+      event,
+      onFormSubmit: () => {
+        replaceCardToForm.call(this);
+        document.removeEventListener('keydown', escKeyDownHandler);
+      },
+      onFormClick: () => {
+        replaceFormToCard.call(this);
+        document.removeEventListener('keydown', escKeyDownHandler);
+      }
     });
 
-    eventEditComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
-      replaceFormToCard();
-      document.removeEventListener('keydown', escKeyDownHandler);
-    });
+    function replaceCardToForm() {
+      replace(eventEditComponent, eventComponent);
+    }
+
+    function replaceFormToCard() {
+      replace(eventComponent, eventEditComponent);
+    }
 
     render(eventComponent, this.#eventListView.element);
   }

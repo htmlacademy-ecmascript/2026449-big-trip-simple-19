@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 import { EVENTS_TYPE, DATE_FORMAT } from '../const.js';
 import { formatDate } from '../utils';
 import { mockEvents } from '../mock/event.js';
@@ -121,27 +121,35 @@ function createEventEditTemplate(event) {
   );
 }
 
-export default class EventEditView {
+export default class EventEditView extends AbstractView {
   #event = null;
-  #element = null;
+  #handleFormSubmit = null;
+  #handleFormClick = null;
 
-  constructor({ event = mockEvents }) {
+  constructor({ event = mockEvents, onFormSubmit, onFormClick }) {
+    super();
     this.#event = event;
+    this.#handleFormSubmit = onFormSubmit;
+    this.#handleFormClick = onFormClick;
+
+    this.element.querySelector('form')
+      .addEventListener('submit', this.#formSubmitHandler);
+
+    this.element.querySelector('.event__rollup-btn')
+      .addEventListener('click', this.#formClickHandler);
   }
 
   get template() {
     return createEventEditTemplate(this.#event);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
+  #formSubmitHandler = (event) => {
+    event.preventDefault();
+    this.#handleFormSubmit();
+  };
 
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
-  }
+  #formClickHandler = (event) => {
+    event.preventDefault();
+    this.#handleFormClick();
+  };
 }
