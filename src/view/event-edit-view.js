@@ -1,6 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { EVENTS_TYPE, DATE_FORMAT } from '../const.js';
-import { formatDate } from '../utils';
+import { formatDate } from '../utils/day.js';
 import { mockEvents } from '../mock/event.js';
 import { mockOffers } from '../mock/offers.js';
 import { mockDestinations } from '../mock/destinations.js';

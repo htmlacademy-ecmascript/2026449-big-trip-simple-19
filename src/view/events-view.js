@@ -1,8 +1,8 @@
 import AbstractView from '../framework/view/abstract-view.js';
-import { formatDate } from '../utils';
+import { formatDate } from '../utils/day.js';
 import { DATE_FORMAT } from '../const.js';
 import { names } from '../mock/destinations.js';
-import { getRandomArrayElement } from '../utils.js';
+import { getRandomArrayElement } from '../utils/common.js';
 
 function createOfferTemplate(event) {
   if (!event.offers || !Object.keys(event.offers).length) {

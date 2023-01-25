@@ -5,6 +5,7 @@ import SortView from '../view/sort-view.js';
 import EventListView from '../view/events-list-view.js';
 import EventEditView from '../view/event-edit-view.js';
 import NoEventsView from '../view/no-events-view.js';
+import { FilterType } from '../const.js';
 
 export default class TripPresenter {
   #events = [];
@@ -22,7 +23,7 @@ export default class TripPresenter {
 
   init() {
     this.#events = [...this.#eventModel.event];
-    render(new FilterView(), this.#filterContainer);
+    render(new FilterView({ filters: Object.keys(FilterType) }), this.#filterContainer);
 
     if (!this.#events.length) {
       render(this.#noEventsView, this.#siteMainContainer);
