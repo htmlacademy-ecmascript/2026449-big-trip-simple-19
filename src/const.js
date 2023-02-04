@@ -8,9 +8,14 @@ const DATE_FORMAT = {
   FullTime: 'YYYY-MM-DDTHH:mm',
 };
 
-const FilterType = {
+const FILTER_TYPE = {
   EVERTHING: 'everthing',
   FUTURE: 'future',
 };
 
-export { EVENTS_TYPE, DATE_FORMAT, FilterType };
+const SORT_TYPE = {
+  DAY: 'day',
+  PRICE: 'price'
+};
+
+export { EVENTS_TYPE, DATE_FORMAT, FILTER_TYPE, SORT_TYPE };

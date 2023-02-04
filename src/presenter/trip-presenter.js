@@ -3,8 +3,9 @@ import FilterView from '../view/filter-view.js';
 import SortView from '../view/sort-view.js';
 import EventListView from '../view/events-list-view.js';
 import NoEventsView from '../view/no-events-view.js';
-import { FilterType } from '../const.js';
+import { FILTER_TYPE, SORT_TYPE } from '../const.js';
 import EventPresenter from './event-presenter';
+import { sortDate, sortPrice } from '../utils/event.js';
 
 export default class TripPresenter {
   #events = [];
@@ -14,6 +15,8 @@ export default class TripPresenter {
   #siteMainContainer = null;
   #eventModel = null;
   #eventPresenters = [];
+  #sortComponent = null;
+  #currentSortType = SORT_TYPE.DAY;
 
   constructor({ filterContainer, siteMainContainer, eventModel }) {
     this.#filterContainer = filterContainer;
@@ -27,27 +30,44 @@ export default class TripPresenter {
 
     if (!this.#events.length) {
       this.#renderEmptyView();
-    } else {
-      this.#renderSortView();
-      this.#renderEventsListView();
-
-      for (let i = 0; i < this.#events.length; i++) {
-        const eventPresenter = new EventPresenter({
-          eventListView: this.#eventListView,
-          beforeEditCallback: this.#resetEvents
-        });
-        eventPresenter.init(this.#events[i]);
-        this.#eventPresenters.push(eventPresenter);
-      }
+      return;
     }
+
+    this.#sortEvents(this.#currentSortType);
+    this.#renderSortView();
+    this.#renderEventListView();
   }
+
+  #clearEventListView = () => {
+    this.#eventPresenters.forEach((eventPresenter) => eventPresenter.destroy());
+    this.#eventPresenters = [];
+  };
+
+  #sortEvents (sortType) {
+    switch (sortType) {
+      case SORT_TYPE.DAY:
+        this.#events.sort(sortDate);
+        break;
+      case SORT_TYPE.PRICE:
+        this.#events.sort(sortPrice);
+        break;
+    }
+
+    this.#currentSortType = sortType;
+  }
+
+  #handleSortTypeChange = (sortType) => {
+    this.#sortEvents(sortType);
+    this.#clearEventListView();
+    this.#renderEventListView();
+  };
 
   #resetEvents = () => {
     this.#eventPresenters.forEach((eventPresenter) => eventPresenter.reset());
   };
 
   #renderFilter () {
-    render(new FilterView({ filters: Object.keys(FilterType) }), this.#filterContainer);
+    render(new FilterView({ filters: Object.keys(FILTER_TYPE) }), this.#filterContainer);
   }
 
   #renderEmptyView () {
@@ -55,10 +75,22 @@ export default class TripPresenter {
   }
 
   #renderSortView () {
-    render(new SortView(), this.#siteMainContainer);
+    this.#sortComponent = new SortView({
+      onSortTypeChange: this.#handleSortTypeChange
+    });
+    render(this.#sortComponent, this.#siteMainContainer);
   }
 
-  #renderEventsListView () {
+  #renderEventListView () {
+    for (let i = 0; i < this.#events.length; i++) {
+      const eventPresenter = new EventPresenter({
+        eventListView: this.#eventListView,
+        beforeEditCallback: this.#resetEvents
+      });
+      eventPresenter.init(this.#events[i]);
+      this.#eventPresenters.push(eventPresenter);
+    }
+
     render(this.#eventListView, this.#siteMainContainer);
   }
 }
