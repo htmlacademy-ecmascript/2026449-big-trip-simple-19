@@ -1,11 +1,10 @@
-import { render, replace } from '../framework/render.js';
+import { render } from '../framework/render.js';
 import FilterView from '../view/filter-view.js';
-import EventView from '../view/events-view.js';
 import SortView from '../view/sort-view.js';
 import EventListView from '../view/events-list-view.js';
-import EventEditView from '../view/event-edit-view.js';
 import NoEventsView from '../view/no-events-view.js';
 import { FilterType } from '../const.js';
+import EventPresenter from './event-presenter';
 
 export default class TripPresenter {
   #events = [];
@@ -14,6 +13,7 @@ export default class TripPresenter {
   #filterContainer = null;
   #siteMainContainer = null;
   #eventModel = null;
+  #eventPresenters = [];
 
   constructor({ filterContainer, siteMainContainer, eventModel }) {
     this.#filterContainer = filterContainer;
@@ -23,57 +23,42 @@ export default class TripPresenter {
 
   init() {
     this.#events = [...this.#eventModel.event];
-    render(new FilterView({ filters: Object.keys(FilterType) }), this.#filterContainer);
+    this.#renderFilter();
 
     if (!this.#events.length) {
-      render(this.#noEventsView, this.#siteMainContainer);
+      this.#renderEmptyView();
     } else {
-      render(new SortView(), this.#siteMainContainer);
-      render(this.#eventListView, this.#siteMainContainer);
+      this.#renderSortView();
+      this.#renderEventsListView();
 
       for (let i = 0; i < this.#events.length; i++) {
-        this.#renderEvent(this.#events[i]);
+        const eventPresenter = new EventPresenter({
+          eventListView: this.#eventListView,
+          beforeEditCallback: this.#resetEvents
+        });
+        eventPresenter.init(this.#events[i]);
+        this.#eventPresenters.push(eventPresenter);
       }
     }
   }
 
-  #renderEvent(event) {
-    const escKeyDownHandler = (evt) => {
-      if (evt.key === 'Escape' || evt.key === 'Esc') {
-        evt.preventDefault();
-        replaceFormToCard.call(this);
-        document.removeEventListener('keydown', escKeyDownHandler);
-      }
-    };
+  #resetEvents = () => {
+    this.#eventPresenters.forEach((eventPresenter) => eventPresenter.reset());
+  };
 
-    const eventComponent = new EventView({
-      event,
-      onEditClick: () => {
-        replaceCardToForm.call(this);
-        document.addEventListener('keydown', escKeyDownHandler);
-      }
-    });
+  #renderFilter () {
+    render(new FilterView({ filters: Object.keys(FilterType) }), this.#filterContainer);
+  }
 
-    const eventEditComponent = new EventEditView({
-      event,
-      onFormSubmit: () => {
-        replaceCardToForm.call(this);
-        document.removeEventListener('keydown', escKeyDownHandler);
-      },
-      onFormClick: () => {
-        replaceFormToCard.call(this);
-        document.removeEventListener('keydown', escKeyDownHandler);
-      }
-    });
+  #renderEmptyView () {
+    render(this.#noEventsView, this.#siteMainContainer);
+  }
 
-    function replaceCardToForm() {
-      replace(eventEditComponent, eventComponent);
-    }
+  #renderSortView () {
+    render(new SortView(), this.#siteMainContainer);
+  }
 
-    function replaceFormToCard() {
-      replace(eventComponent, eventEditComponent);
-    }
-
-    render(eventComponent, this.#eventListView.element);
+  #renderEventsListView () {
+    render(this.#eventListView, this.#siteMainContainer);
   }
 }
