@@ -1,8 +1,8 @@
-import { FilterType } from '../const';
+import { FILTER_TYPE } from '../const';
 
 const filter = {
-  [FilterType.EVERTHING]: (events) => events.filter((event) => !event.length),
-  [FilterType.FUTURE]: (events) => events.filter((event) => new Date().getTime() <= new Date(event.end).getTime()),
+  [FILTER_TYPE.EVERTHING]: (events) => events.filter((event) => !event.length),
+  [FILTER_TYPE.FUTURE]: (events) => events.filter((event) => new Date().getTime() <= new Date(event.end).getTime()),
 };
 
 export { filter };

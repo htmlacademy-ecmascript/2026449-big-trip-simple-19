@@ -1,4 +1,4 @@
-import { render, replace } from '../framework/render.js';
+import { render, replace, remove } from '../framework/render.js';
 import EventView from '../view/events-view.js';
 import EventEditView from '../view/event-edit-view.js';
 
@@ -75,5 +75,10 @@ export default class EventPresenter {
 
   reset = () => {
     this.#handleFormClose();
+  };
+
+  destroy = () => {
+    remove(this.#eventComponent);
+    remove(this.#eventEditComponent);
   };
 }
