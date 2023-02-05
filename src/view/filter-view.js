@@ -23,7 +23,7 @@ function createFilterItemTemplate(filter, isChecked) {
 
 function createFilterTemplate(filterItems) {
   const filterItemsTemplate = filterItems
-    .map((filter, index) => createFilterItemTemplate(filter, index === 0))
+    .map((filter, index) => createFilterItemTemplate(filter.name, index === 0))
     .join('');
 
   return (

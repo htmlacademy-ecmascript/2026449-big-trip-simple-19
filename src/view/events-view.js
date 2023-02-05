@@ -1,8 +1,6 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { formatDate } from '../utils/day.js';
 import { DATE_FORMAT } from '../const.js';
-import { names } from '../mock/destinations.js';
-import { getRandomArrayElement } from '../utils/common.js';
 
 function createOfferTemplate(event) {
   if (!event.offers || !Object.keys(event.offers).length) {
@@ -18,9 +16,7 @@ function createOfferTemplate(event) {
   );
 }
 
-function createEventsTemplate(event) {
-  const title = `${event.type} ${getRandomArrayElement(names)}`;
-
+function createEventsTemplate(event, destination, offers) {
   return (
     `<li class="trip-events__item">
       <div class="event">
@@ -30,7 +26,7 @@ function createEventsTemplate(event) {
         <div class="event__type">
           <img class="event__type-icon" width="42" height="42" src="img/icons/${event.type.toLowerCase()}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">${title}</h3>
+        <h3 class="event__title">${event.type} ${destination.title}</h3>
         <div class="event__schedule">
           <p class="event__time">
             <time class="event__start-time" datetime="${formatDate(event.start, DATE_FORMAT.FullTime)}">
@@ -47,7 +43,7 @@ function createEventsTemplate(event) {
         </p>
         <h4 class="visually-hidden">Offers:</h4>
         <ul class="event__selected-offers">
-          ${createOfferTemplate(event)}
+          ${createOfferTemplate(offers)}
         </ul>
         <button class="event__rollup-btn" type="button">
           <span class="visually-hidden">Open event</span>
@@ -59,11 +55,15 @@ function createEventsTemplate(event) {
 
 export default class EventsView extends AbstractView {
   #event = null;
+  #destination = null;
+  #offers = null;
   #handleEditClick = null;
 
-  constructor({ event, onEditClick }) {
+  constructor({ event, destination, offers, onEditClick }) {
     super();
     this.#event = event;
+    this.#destination = destination;
+    this.#offers = offers;
 
     this.#handleEditClick = onEditClick;
 
@@ -72,7 +72,7 @@ export default class EventsView extends AbstractView {
   }
 
   get template() {
-    return createEventsTemplate(this.#event);
+    return createEventsTemplate(this.#event, this.#destination, this.#offers);
   }
 
   #editClickHandler = (evt) => {
