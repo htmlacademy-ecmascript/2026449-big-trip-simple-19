@@ -3,7 +3,7 @@ import SortView from '../view/sort-view.js';
 import EventListView from '../view/events-list-view.js';
 import NoEventsView from '../view/no-events-view.js';
 import EventPresenter from './event-presenter';
-import { sortDate, sortPrice } from '../utils/event.js';
+import { sortDate, sortPrice, updateItem } from '../utils/event.js';
 import { SORT_TYPE } from '../const.js';
 
 export default class TripPresenter {
@@ -28,10 +28,19 @@ export default class TripPresenter {
   }
 
   #renderEvent(event, destinations, offersByType) {
-    const eventPresenter = new EventPresenter(this.#tripsListComponent, this.#handleModeChange);
+    const eventPresenter = new EventPresenter({
+      container: this.#tripsListComponent,
+      onModeChange: this.#handleModeChange,
+      onDataChange: this.#handleEventChange
+    });
     eventPresenter.init(event, destinations, offersByType);
     this.#eventPresenter.set(event.id, eventPresenter);
   }
+
+  #handleEventChange = (update) => {
+    this.#events = updateItem(this.#events, update);
+    this.#eventPresenter.get(update.id).init(update, this.#eventModel.destinations, this.#eventModel.offersByType);
+  };
 
   #handleModeChange = () => {
     this.#eventPresenter.forEach((presenter) => presenter.resetView());

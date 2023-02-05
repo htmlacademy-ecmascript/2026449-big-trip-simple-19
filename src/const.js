@@ -6,6 +6,7 @@ const DATE_FORMAT = {
   Time: 'HH:mm',
   FormTime: 'DD/MM/YY HH:mm',
   FullTime: 'YYYY-MM-DDTHH:mm',
+  Date: 'd/m/y H:i',
 };
 
 const FILTER_TYPE = {
