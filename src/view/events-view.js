@@ -26,7 +26,7 @@ function createEventsTemplate(event, destination, offers) {
         <div class="event__type">
           <img class="event__type-icon" width="42" height="42" src="img/icons/${event.type.toLowerCase()}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">${event.type} ${destination.title}</h3>
+        <h3 class="event__title">${event.type} ${destination?.title}</h3>
         <div class="event__schedule">
           <p class="event__time">
             <time class="event__start-time" datetime="${formatDate(event.start, DATE_FORMAT.FullTime)}">
@@ -57,26 +57,24 @@ export default class EventsView extends AbstractView {
   #event = null;
   #destination = null;
   #offers = null;
-  #handleEditClick = null;
+  #handleRollupButtonClick = null;
 
-  constructor({ event, destination, offers, onEditClick }) {
+  constructor({event, destination, offers, onRollupButtonClick}) {
     super();
     this.#event = event;
     this.#destination = destination;
     this.#offers = offers;
-
-    this.#handleEditClick = onEditClick;
+    this.#handleRollupButtonClick = onRollupButtonClick;
 
     this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#editClickHandler);
+      .addEventListener('click', this.#rollupButtonClickHandler);
   }
 
   get template() {
     return createEventsTemplate(this.#event, this.#destination, this.#offers);
   }
 
-  #editClickHandler = (evt) => {
-    evt.preventDefault();
-    this.#handleEditClick();
+  #rollupButtonClickHandler = () => {
+    this.#handleRollupButtonClick();
   };
 }

@@ -28,4 +28,8 @@ function sortPrice (eventA, eventB) {
   return weight ?? eventB.price - eventA.price;
 }
 
-export { sortDate, sortPrice };
+function updateItem(items, update) {
+  return items.map((item) => item.id === update.id ? update : item);
+}
+
+export { sortDate, sortPrice, updateItem };
