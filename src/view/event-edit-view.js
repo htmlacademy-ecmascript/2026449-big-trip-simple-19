@@ -1,12 +1,22 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { EVENTS_TYPE, DATE_FORMAT } from '../const.js';
 import { formatDate } from '../utils/day.js';
-import { mockEvents } from '../mock/event.js';
-import { mockOffers } from '../mock/offers.js';
-import { mockDestinations } from '../mock/destinations.js';
 
-function createDestinationImagesTemplate() {
-  return mockDestinations[0].pictures.map((picture) => `<img class="event__photo" src="${picture}" alt="Event photo">`);
+function createDestinationNameOptionsTemplate(destinations, event) {
+  const uniqueDestinations = Array.from(new Set(destinations));
+
+  return uniqueDestinations.map((destination) => (
+    `<option 
+      value=${destination.name} ${destination.id === event.eventDestination.id ? 'selected' : ''}
+    >
+      ${destination.type.toUpperCase() + event.eventDestination.title}
+    </option>`)).join('');
+}
+
+function createDestinationImagesTemplate(destination) {
+  return destination.pictures.map((picture) => `
+    <img class="event__photo" src="${picture}" alt="Event photo">
+  `);
 }
 
 function createEventItemTemplate() {
@@ -28,12 +38,12 @@ function createEventItemTemplate() {
   ).join('');
 }
 
-function createOfferTemplate(event) {
-  if (!event.offers || !Object.keys(event.offers).length) {
+function createOfferTemplate(offers, availableOffers) {
+  if (offers || !Object.keys(offers).length) {
     return 'No available offers';
   }
 
-  return mockOffers.map((offer, index) => (
+  return availableOffers.map((offer, index) => (
     `<div class="event__offer-selector">
         <input 
           class="event__offer-checkbox  visually-hidden" 
@@ -51,7 +61,7 @@ function createOfferTemplate(event) {
   `)).join('');
 }
 
-function createEventEditTemplate(event) {
+function createEventEditTemplate(event, destination, availableOffers, isNewPoint, allDestinations) {
   return (
     `<li class="trip-events__item">
       <form class="event event--edit" action="#" method="post">
@@ -74,9 +84,7 @@ function createEventEditTemplate(event) {
             </label>
             <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="Chamonix" list="destination-list-1">
             <datalist id="destination-list-1">
-              <option value="Amsterdam"></option>
-              <option value="Geneva"></option>
-              <option value="Chamonix"></option>
+              ${createDestinationNameOptionsTemplate(allDestinations, event)}
             </datalist>
           </div>
           <div class="event__field-group  event__field-group--time">
@@ -91,27 +99,33 @@ function createEventEditTemplate(event) {
               <span class="visually-hidden">Price</span>
               &euro;
             </label>
-            <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${event.price}">
+            <input 
+              class="event__input  event__input--price" 
+              id="event-price-1" 
+              type="number" 
+              name="event-price" 
+              value="${event.price}"
+            >
           </div>
           <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-          <button class="event__reset-btn" type="reset">Delete</button>
-          <button class="event__rollup-btn" type="button">
-            <span class="visually-hidden">Open event</span>
-          </button>
+          <button class="event__reset-btn" type="reset">${isNewPoint ? 'Cancel' : 'Delete'}</button>
+            ${isNewPoint ? '' : `<button class="event__rollup-btn" type="button">
+              <span class="visually-hidden">Open event</span>
+            </button>`}
         </header>
         <section class="event__details">
           <section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
             <div class="event__available-offers">
-            ${createOfferTemplate(event)}
+              ${createOfferTemplate(event.offers, availableOffers)}
             </div>
           </section>
           <section class="event__section  event__section--destination">
             <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-            <p class="event__destination-description">${mockDestinations[0].description}</p>
+            <p class="event__destination-description">${destination.description}</p>
             <div class="event__photos-container">
               <div class="event__photos-tape">
-                  ${createDestinationImagesTemplate()}
+                  ${createDestinationImagesTemplate(destination)}
               </div>
             </div>
           </section>
@@ -121,35 +135,79 @@ function createEventEditTemplate(event) {
   );
 }
 
-export default class EventEditView extends AbstractView {
-  #event = null;
-  #handleFormSubmit = null;
-  #handleFormClick = null;
+export default class EditEventFormView extends AbstractStatefulView {
+  #allOffers = null;
+  #destinations = null;
+  #isNewPoint = Boolean;
+  #handleFormSubmit = () => { };
+  #handleRollupButtonClick = () => { };
+  #sourceOffers = null;
+  #sourceType = null;
 
-  constructor({ event = mockEvents, onFormSubmit, onFormClick }) {
+  constructor({ event, destinations, allOffers, isNewPoint, onFormSubmit, onRollupButtonClick }) {
     super();
-    this.#event = event;
+    this.#destinations = destinations;
+    this.#allOffers = allOffers;
+    this.#isNewPoint = isNewPoint;
     this.#handleFormSubmit = onFormSubmit;
-    this.#handleFormClick = onFormClick;
+    this.#handleRollupButtonClick = onRollupButtonClick;
+    this._setState(EditEventFormView.parseEventToState(event, this.#allOffers, this.#destinations));
 
+    this.#sourceOffers = this._state.offers;
+    this.#sourceType = event.type;
+
+    this._restoreHandlers();
+  }
+
+  static parseEventToState(event, allOffers, destinations) {
+    const availableOffers = allOffers.find((item) => item.type === event.type).offers;
+    const eventDestination = destinations.find((item) => event.destination === item.id);
+    return {
+      ...event,
+      availableOffers,
+      eventDestination
+    };
+  }
+
+  _restoreHandlers() {
     this.element.querySelector('form')
       .addEventListener('submit', this.#formSubmitHandler);
-
     this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#formClickHandler);
+      .addEventListener('click', this.#rollupButtonClickHandler);
+    this.element.querySelector('.event__type-list')
+      .addEventListener('change', this.#eventTypeChangeHandler);
+    this.element.querySelector('#destination-list-1')
+      .addEventListener('change', this.#eventDestinationChangeHandler);
   }
 
   get template() {
-    return createEventEditTemplate(this.#event);
+    return createEventEditTemplate(this._state, this._state.eventDestination, this._state.availableOffers, this.#isNewPoint, this.#allOffers, this.#destinations);
   }
 
-  #formSubmitHandler = (event) => {
-    event.preventDefault();
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
     this.#handleFormSubmit();
   };
 
-  #formClickHandler = (event) => {
-    event.preventDefault();
-    this.#handleFormClick();
+  #rollupButtonClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleRollupButtonClick();
+  };
+
+  #eventTypeChangeHandler = (evt) => {
+    evt.preventDefault();
+    const type = evt.target.value;
+    const availableOffers = this.#allOffers.find((item) => item.type === type).offers;
+    const offers = type === this.#sourceType ? this.#sourceOffers : [];
+
+    if (evt.target.className.includes('event__type-input')) {
+      this.updateElement({ type, availableOffers, offers });
+    }
+  };
+
+  #eventDestinationChangeHandler = (evt) => {
+    const { value } = evt.target;
+    const newDestination = this.#destinations.find((destination) => destination.name === value);
+    this.updateElement({ eventDestination: newDestination });
   };
 }

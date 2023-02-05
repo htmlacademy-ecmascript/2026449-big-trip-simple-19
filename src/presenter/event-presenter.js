@@ -2,83 +2,99 @@ import { render, replace, remove } from '../framework/render.js';
 import EventView from '../view/events-view.js';
 import EventEditView from '../view/event-edit-view.js';
 
+const Mode = {
+  DEFAULT: 'DEFAULT',
+  EDITING: 'EDITING',
+};
+
 export default class EventPresenter {
-  #event;
-  #eventListView;
-  #replaceFormToCard;
-  #replaceCardToForm;
-  #escKeyDownHandler;
-  #eventComponent;
-  #eventEditComponent;
-  #beforeEditCallback;
-  #isFormOpened;
+  #tripsListComponent = null;
 
-  constructor ({eventListView, beforeEditCallback}) {
-    this.#eventListView = eventListView;
-    this.#beforeEditCallback = beforeEditCallback;
+  #eventComponent = null;
+  #eventEditComponent = null;
+
+  #event = null;
+  #destinations = null;
+  #allOffers = null;
+  #availableOffers = null;
+  #offers = null;
+
+  #handleModeChange = null;
+  #mode = Mode.DEFAULT;
+
+  constructor(tripsListComponent, handleModeChange) {
+    this.#tripsListComponent = tripsListComponent;
+    this.#handleModeChange = handleModeChange;
   }
 
-  init (event) {
+  init(event, destinations, offersByType) {
     this.#event = event;
-    this.#isFormOpened = false;
+    this.#allOffers = offersByType;
+    this.#destinations = destinations;
+    this.#availableOffers = offersByType.find((item) => item.type === this.#event.type).offers;
+    this.#offers = this.#availableOffers.filter((offer) => this.#event.offers.includes(offer.id));
 
-    this.#eventComponent = new EventView({
-      event: this.#event,
-      onEditClick: this.#handleEditClick
-    });
-
-    this.#eventEditComponent = new EventEditView({
-      event: this.#event,
-      onFormSubmit: this.#handleFormSubmit,
-      onFormClose: this.#handleFormClose
-    });
-
-    this.#replaceCardToForm = () => {
-      replace(this.#eventEditComponent, this.#eventComponent);
-    };
-
-    this.#replaceFormToCard = () => {
-      replace(this.#eventComponent, this.#eventEditComponent);
-    };
-
-    this.#escKeyDownHandler = (evt) => {
-      if (evt.key === 'Escape' || evt.key === 'Esc') {
-        evt.preventDefault();
-        this.#replaceFormToCard();
-        document.removeEventListener('keydown', this.#escKeyDownHandler);
+    this.#eventComponent = new EventView(
+      {
+        event: this.#event,
+        destination: this.#destinations.find((item) => this.#event.destination === item.id),
+        offers: this.#offers,
+        onEditClick: () => {
+          this.#replaceCardToForm();
+          document.addEventListener('keydown', this.#escKeyDownHandler);
+        }
       }
-    };
+    );
 
-    render(this.#eventComponent, this.#eventListView.element);
+    this.#eventEditComponent = new EventEditView(
+      {
+        event: this.#event,
+        destinations: this.#destinations,
+        allOffers: this.#allOffers,
+        isNewPoint: false,
+        onFormSubmit: this.#handleFormSubmit,
+        onRollupButtonClick: this.#closeEventEditForm
+      }
+    );
+
+    render(this.#eventComponent, this.#tripsListComponent.element);
   }
 
-  #handleFormSubmit = () => {
-    this.#isFormOpened = false;
+  resetView = () => {
+    if (this.#mode !== Mode.DEFAULT) {
+      this.#replaceFormToCard();
+    }
+  };
+
+  #replaceCardToForm = () => {
+    this.#handleModeChange();
+    this.#mode = Mode.EDITING;
+    replace(this.#eventEditComponent, this.#eventComponent);
+  };
+
+  #replaceFormToCard = () => {
+    this.#mode = Mode.DEFAULT;
+    replace(this.#eventComponent, this.#eventEditComponent);
+  };
+
+  #closeEventEditForm = () => {
     this.#replaceFormToCard();
     document.removeEventListener('keydown', this.#escKeyDownHandler);
   };
 
-  #handleEditClick = () => {
-    this.#beforeEditCallback();
-    this.#replaceCardToForm();
-    this.#isFormOpened = true;
-    document.addEventListener('keydown', this.#escKeyDownHandler);
-  };
-
-  #handleFormClose = () => {
-    if (this.#isFormOpened) {
-      this.#replaceFormToCard();
-      this.#isFormOpened = false;
+  #escKeyDownHandler = (evt) => {
+    if (evt.key === 'Escape' || evt.key === 'Esc') {
+      evt.preventDefault();
+      this.#closeEventEditForm();
     }
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
   };
 
-  reset = () => {
-    this.#handleFormClose();
+  #handleFormSubmit = () => {
+    this.#replaceFormToCard();
   };
 
-  destroy = () => {
+  destroy() {
     remove(this.#eventComponent);
     remove(this.#eventEditComponent);
-  };
+  }
 }
