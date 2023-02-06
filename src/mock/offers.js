@@ -13,16 +13,10 @@ const offers = [
   'People with disabilities',
 ];
 
-// const mockOffers = Array.from(Array(5), (_, i) => ({
-//   id: i,
-//   title: offers[Math.floor(Math.random() * 10)],
-//   price: Math.floor(Math.random() * 1000)
-// }));
-
 const mockOffers = EVENTS_TYPE.map((type) => ({
   type: type,
-  offers: Array.from({length: 4}, (_, index) => ({
-    id: index,
+  offers: Array.from({length: 9}, (_, index) => ({
+    id: index + 1,
     title: `offer ${Math.round(Math.random() * 1000)}`,
     price: Math.floor(Math.random() * 1000)
   }))

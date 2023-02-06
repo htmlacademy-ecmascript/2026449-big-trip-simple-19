@@ -1,80 +1,93 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { formatDate } from '../utils/day.js';
 import { DATE_FORMAT } from '../const.js';
+import { mockDestinations } from '../mock/destinations.js';
 
-function createOfferTemplate(event) {
-  if (!event.offers || !Object.keys(event.offers).length) {
-    return '<li class="event__offer">No additional offers</li>';
-  }
+function createTripEventListTemplate(tripEvent) {
+  const { offers, type, dateFrom, dateTo, destination, basePrice } = tripEvent;
 
-  return (
-    `<li class="event__offer">
-      <span class="event__offer-title">${event.offers.title}</span>
+  const eventDestination = mockDestinations.find((item) => destination === item.id);
+  const checkedOffers = offers.map((element) => element.id);
+
+  const offersTemplate = () => {
+    if (!checkedOffers.length) {
+      return `<li class="event__offer">
+      <span class="event__offer-title">No additional offers</span>
+    </li>`;
+    } else {
+      const template = offers.map((offer) => `
+      <li class="event__offer">
+      <span class="event__offer-title">${offer.title}</span>
       &plus;&euro;&nbsp;
-      <span class="event__offer-price">${event.price}</span>
-    </li>`
-  );
-}
+      <span class="event__offer-price">${offer.price}</span>
+    </li>`).join('');
 
-function createEventsTemplate(event, destination, offers) {
+      return template;
+    }
+  };
+
   return (
-    `<li class="trip-events__item">
-      <div class="event">
-        <time class="event__date" datetime="${formatDate(event.start, DATE_FORMAT.FullTime)}">
-          ${formatDate(event.start, DATE_FORMAT.Day)}
-        </time>
-        <div class="event__type">
-          <img class="event__type-icon" width="42" height="42" src="img/icons/${event.type.toLowerCase()}.png" alt="Event type icon">
-        </div>
-        <h3 class="event__title">${event.type} ${destination?.title}</h3>
-        <div class="event__schedule">
-          <p class="event__time">
-            <time class="event__start-time" datetime="${formatDate(event.start, DATE_FORMAT.FullTime)}">
-              ${formatDate(event.start, DATE_FORMAT.Time)}
-            </time>
-            &mdash;
-            <time class="event__end-time" datetime="${formatDate(event.start, DATE_FORMAT.FullTime)}">
-              ${formatDate(event.start, DATE_FORMAT.Time)}
-            </time>
+    `<ul class="trip-events__list">
+      <li class="trip-events__item">
+        <div class="event">
+          <time class="event__date" datetime="${formatDate(dateFrom, DATE_FORMAT.FullTime)}">
+            ${formatDate(dateFrom, DATE_FORMAT.Day)}
+          </time>
+          <div class="event__type">
+            <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
+          </div>
+          <h3 class="event__title">${type} ${eventDestination ? eventDestination.name : ''}</h3>
+          <div class="event__schedule">
+            <p class="event__time">
+              <time class="event__start-time" datetime="${formatDate(dateFrom, DATE_FORMAT.FullTime)}">
+                ${formatDate(dateFrom, DATE_FORMAT.Time)}
+              </time>
+              &mdash;
+              <time class="event__end-time" datetime="${formatDate(dateTo, DATE_FORMAT.FullTime)}">
+                ${formatDate(dateTo, DATE_FORMAT.Time)}
+              </time>
+            </p>
+          </div>
+          <p class="event__price">
+            &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
           </p>
+          <h4 class="visually-hidden">Offers:</h4>
+          <ul class="event__selected-offers">
+            ${offersTemplate()}
+          </ul>
+          <button class="event__rollup-btn" type="button">
+            <span class="visually-hidden">Open event</span>
+          </button>
         </div>
-        <p class="event__price">
-          &euro;&nbsp;<span class="event__price-value">${event.price}</span>
-        </p>
-        <h4 class="visually-hidden">Offers:</h4>
-        <ul class="event__selected-offers">
-          ${createOfferTemplate(offers)}
-        </ul>
-        <button class="event__rollup-btn" type="button">
-          <span class="visually-hidden">Open event</span>
-        </button>
-      </div>
-    </li>`
+      </li>
+    </ul>`
   );
 }
 
 export default class EventsView extends AbstractView {
-  #event = null;
-  #destination = null;
+  #tripEvent = null;
+  #handleEditClick = null;
   #offers = null;
-  #handleRollupButtonClick = null;
+  #destination = null;
 
-  constructor({event, destination, offers, onRollupButtonClick}) {
+  constructor(tripEvent) {
     super();
-    this.#event = event;
-    this.#destination = destination;
+    const { event, onEditClick, offers, destination } = tripEvent;
+    this.#tripEvent = event;
     this.#offers = offers;
-    this.#handleRollupButtonClick = onRollupButtonClick;
+    this.#destination = mockDestinations.find((item) => destination === item.id);
+    this.#handleEditClick = onEditClick;
 
     this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#rollupButtonClickHandler);
+      .addEventListener('click', this.#editClickHandler);
   }
 
   get template() {
-    return createEventsTemplate(this.#event, this.#destination, this.#offers);
+    return createTripEventListTemplate(this.#tripEvent);
   }
 
-  #rollupButtonClickHandler = () => {
-    this.#handleRollupButtonClick();
+  #editClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleEditClick(this.#tripEvent, this.#offers, this.#destination);
   };
 }
