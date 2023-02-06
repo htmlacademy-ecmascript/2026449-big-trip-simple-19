@@ -9,14 +9,26 @@ const DATE_FORMAT = {
   Date: 'd/m/y H:i',
 };
 
-const FILTER_TYPE = {
-  EVERTHING: 'everthing',
+const FilterType = {
+  ALL: 'everything',
   FUTURE: 'future',
 };
 
-const SORT_TYPE = {
-  DAY: 'day',
-  PRICE: 'price'
+const SortType = {
+  DATE: 'date',
+  PRICE: 'price',
 };
 
-export { EVENTS_TYPE, DATE_FORMAT, FILTER_TYPE, SORT_TYPE };
+const UserAction = {
+  UPDATE_EVENT: 'UPDATE_EVENT',
+  ADD_EVENT: 'ADD_EVENT',
+  DELETE_EVENT: 'DELETE_EVENT',
+};
+
+const UpdateType = {
+  PATCH: 'PATCH',
+  MINOR: 'MINOR',
+  MAJOR: 'MAJOR',
+};
+
+export { EVENTS_TYPE, DATE_FORMAT, FilterType, SortType, UserAction, UpdateType };
