@@ -29,6 +29,9 @@ const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
+  INIT_EVENT: 'INIT_EVENT',
+  INIT_EVENT_COMMON: 'INIT_EVENT_COMMON',
+  ERROR_LOADING: 'ERROR_LOADING'
 };
 
 export { EVENTS_TYPE, DATE_FORMAT, FilterType, SortType, UserAction, UpdateType };

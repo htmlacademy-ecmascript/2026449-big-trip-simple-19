@@ -1,11 +1,17 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { DATE_FORMAT } from '../const.js';
-// import { formatDate } from '../utils/day.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 import dayjs from 'dayjs';
-import { mockOffers } from '../mock/offers.js';
-import { mockDestinations } from '../mock/destinations.js';
+import { EVENTS_TYPE } from '../const.js';
+
+export const BLANK_EVENT = {
+  basePrice: 1,
+  destination: -1,
+  id:0,
+  offers: [],
+  type: EVENTS_TYPE[0]
+};
 
 function getPicturesListTemplate(eventDestination) {
   let template = '';
@@ -64,14 +70,16 @@ function createSectionOffersEditTemplate(offerTypes, offer, type) {
   return template;
 }
 
-const chooseDestination = mockDestinations.map((element) => `<option value="${element.name}">`).join('');
-function createEventEditTemplate(tripEvent) {
-  const { offers, type, dateFrom, dateTo, destination, basePrice, id } = tripEvent;
+function createEventEditTemplate(tripEvent, eventCommon) {
+  const isNewEvent = !('id' in tripEvent);
+  const { offers, type, dateFrom, dateTo, destination, basePrice, id, isDisabled, isSaving, isDeleting } = tripEvent;
+
+  const chooseDestination = eventCommon.allDestinations.map((element) => `<option value="${element.name}">`).join('');
 
   const parceDateStart = dayjs(dateFrom);
   const parceDateEnd = dayjs(dateTo);
-  const eventDestination = mockDestinations.find((item) => destination === item.id);
-  const eventTypeOffer = mockOffers.find((offer) => offer.type === type);
+  const eventDestination = eventCommon.allDestinations.find((item) => destination === item.id);
+  const eventTypeOffer = eventCommon.allOffers.find((offer) => offer.type === type);
 
   return (`
 <li class="trip-events__item">
@@ -82,11 +90,11 @@ function createEventEditTemplate(tripEvent) {
           <span class="visually-hidden">Choose event type</span>
           <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
         </label>
-        <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox">
+        <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox" ${isDisabled ? 'disabled' : ''}>
         <div class="event__type-list">
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Event type</legend>
-            ${createEventTypeItemEditTemplate(mockOffers)}
+            ${createEventTypeItemEditTemplate(eventCommon.allOffers)}
           </fieldset>
         </div>
       </div>
@@ -108,23 +116,29 @@ function createEventEditTemplate(tripEvent) {
       </div>
       <div class="event__field-group  event__field-group--time">
         <label class="visually-hidden" for="event-start-time-${id}">From</label>
-        <input class="event__input  event__input--time event-start-time" data-start-time id="event-start-time-${id}" type="text" name="event-start-time" value='${parceDateStart.format(DATE_FORMAT.FormTime)}'>
+        <input class="event__input  event__input--time event-start-time" data-start-time id="event-start-time-${id}" type="text" name="event-start-time" value='${parceDateStart.format(DATE_FORMAT.FormTime)}' ${isDisabled ? 'disabled' : ''}>
         &mdash;
         <label class="visually-hidden" for="event-end-time-${id}">To</label>
-        <input class="event__input  event__input--time event-end-time" data-end-time id="event-end-time-${id}" type="text" name="event-end-time" value='${parceDateEnd.format(DATE_FORMAT.FormTime)}'>
+        <input class="event__input  event__input--time event-end-time" data-end-time id="event-end-time-${id}" type="text" name="event-end-time" value='${parceDateEnd.format(DATE_FORMAT.FormTime)}' ${isDisabled ? 'disabled' : ''}>
       </div>
       <div class="event__field-group  event__field-group--price">
         <label class="event__label" for="event-price-${id}">
           <span class="visually-hidden">Price</span>
           &euro;
         </label>
-        <input class="event__input  event__input--price" id="event-price-${id}" type="text" name="event-price" value="${basePrice !== null ? basePrice : ''}">
+        <input class="event__input  event__input--price" id="event-price-${id}" type="text" name="event-price" value="${basePrice !== null ? basePrice : ''}" >
       </div>
-      <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="reset">Delete</button>
-      <button class="event__rollup-btn" type="button">
+      <button class="event__save-btn  btn  btn--blue" type="submit" ${isDisabled ? 'disabled' : ''}>${isSaving ? 'Saving...' : 'Save'}</button>
+      ${isNewEvent ? `
+      <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>Cancel</button>
+      ` : `
+      <button class="event__reset-btn" type="reset" ${isDisabled ? 'disabled' : ''}>
+        ${isDeleting ? 'Deleting...' : 'Delete'}
+      </button>
+      <button class="event__rollup-btn" type="button" ${isDisabled ? 'disabled' : ''}>
         <span class="visually-hidden">Open event</span>
       </button>
+      `}
     </header>
     <section class="event__details">
       <section class="event__section  event__section--offers">
@@ -156,33 +170,48 @@ export default class EventEditView extends AbstractStatefulView {
   #datepickerFrom = null;
   #datepickerTo = null;
   #handleDeleteClick = null;
+  #apiModel = null;
+  #tripEvent = null;
+  #eventCommon = null;
 
-  constructor(tripEvent) {
-    const { event, onFormSubmit, onFormClose, offers, destination, onDeleteClick } = tripEvent;
+  constructor({ event = {
+    ...BLANK_EVENT,
+    dateFrom: new Date(),
+    dateTo: new Date(),
+  }, onFormSubmit, onFormClose, offers, destination, onDeleteClick, apiModel, eventCommon}) {
     super();
+    this.#apiModel = apiModel;
+    this.#eventCommon = event;
     this._setState(EventEditView.parseEventToState(event));
+    this.#eventCommon = eventCommon;
     this.#handleFormSubmit = onFormSubmit;
     this.#handleFormClose = onFormClose;
     this.#offers = offers;
-    this.#destination = mockDestinations.find((item) => destination === item.id);
+    this.#destination = eventCommon.allDestinations.find((item) => destination === item.id);
     this.#handleDeleteClick = onDeleteClick;
 
     this._restoreHandlers();
   }
 
   get template() {
-    return createEventEditTemplate(this._state);
+    return createEventEditTemplate(this._state, this.#eventCommon);
   }
 
   _restoreHandlers() {
     this.element.querySelector('form')
       .addEventListener('submit', this.#formSubmitHandler);
-    this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#formCloseHandler);
+    const rollupButtonElement = this.element.querySelector('.event__rollup-btn');
+    if (rollupButtonElement) {
+      this.element.querySelector('.event__rollup-btn')
+        .addEventListener('click', this.#formCloseHandler);
+    }
     this.element.querySelector('.event__reset-btn')
       .addEventListener('click', this.#deleteClickHandler);
-    this.element.querySelector('.event__available-offers')
-      .addEventListener('change', this.#offerChangeHandler);
+    if (this.#eventCommon.allOffers.find((offerTypes) => offerTypes.type === this._state.type).offers)
+    {
+      this.element.querySelector('.event__available-offers')
+        .addEventListener('change', this.#offerChangeHandler);
+    }
     this.element.querySelector('.event__input--price')
       .addEventListener('input', this.#priceInputHandler);
     this.element.querySelector('.event__type-group')
@@ -215,9 +244,9 @@ export default class EventEditView extends AbstractStatefulView {
     if (regex.test(evt.target.value)) {
       inputPrice = evt.target.value;
     }
-    if (evt.target.value === '') { evt.target.value = '0'; }
-    evt.target.value = isNaN(inputPrice) ? this._state.basePrice : inputPrice;
-    this._state.basePrice = evt.target.value;
+    if (evt.target.value === '') { inputPrice = 1; }
+    inputPrice = isNaN(inputPrice) ? this._state.basePrice : inputPrice;
+    this._state.basePrice = inputPrice;
   };
 
   #eventTypeChangeHandler = (evt) => {
@@ -231,7 +260,7 @@ export default class EventEditView extends AbstractStatefulView {
 
   #destinationChangeHandler = (evt) => {
     evt.preventDefault();
-    const eventDestination = mockDestinations.find((item) => evt.target.value === item.name);
+    const eventDestination = this.#eventCommon.allDestinations.find((item) => evt.target.value === item.name);
     const destId = eventDestination === undefined ? -1 : eventDestination.id;
     this.updateElement({
       destination: destId,
@@ -240,7 +269,7 @@ export default class EventEditView extends AbstractStatefulView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit(EventEditView.parseStateToEvent(this._state), this.#offers, this.#destination);
+    this.#handleFormSubmit(EventEditView.parseStateToPoint(this._state));
   };
 
   #formCloseHandler = () => {
@@ -308,13 +337,20 @@ export default class EventEditView extends AbstractStatefulView {
 
   static parseEventToState(event) {
     return {
-      ...event
+      ...event,
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false,
     };
   }
 
   static parseStateToEvent(state) {
-    return {
-      ...state
-    };
+    const event = { ...state };
+
+    delete event.isDisabled;
+    delete event.isSaving;
+    delete event.isDeleting;
+
+    return event;
   }
 }

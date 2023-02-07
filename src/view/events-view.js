@@ -1,29 +1,34 @@
 import AbstractView from '../framework/view/abstract-view.js';
 import { formatDate } from '../utils/day.js';
 import { DATE_FORMAT } from '../const.js';
-import { mockDestinations } from '../mock/destinations.js';
 
-function createTripEventListTemplate(tripEvent) {
+function createTripEventListTemplate(tripEvent, eventCommon) {
   const { offers, type, dateFrom, dateTo, destination, basePrice } = tripEvent;
 
-  const eventDestination = mockDestinations.find((item) => destination === item.id);
-  const checkedOffers = offers.map((element) => element.id);
+  const eventDestination = eventCommon.allDestinations.find((item) => destination === item.id);
 
   const offersTemplate = () => {
-    if (!checkedOffers.length) {
-      return `<li class="event__offer">
-      <span class="event__offer-title">No additional offers</span>
-    </li>`;
-    } else {
-      const template = offers.map((offer) => `
-      <li class="event__offer">
-      <span class="event__offer-title">${offer.title}</span>
-      &plus;&euro;&nbsp;
-      <span class="event__offer-price">${offer.price}</span>
-    </li>`).join('');
+    let template = `<li class="event__offer">
+    <span class="event__offer-title">
+    No additional offers</span>
+  </li>`;
+    if (offers.length) {
+      template = offers.map((elem) => {
+        const offerTypes = eventCommon.allOffers.find((offerType) => offerType.type === type);
+        const selectedOffer = offerTypes.offers.find((offer) => offer.id === elem);
 
-      return template;
+        return (`
+          <li class="event__offer">
+            <span class="event__offer-title">${selectedOffer.title}</span>
+            &plus;&euro;&nbsp;
+            <span class="event__offer-price">${selectedOffer.price}</span>
+          </li>`
+        );
+      }).join('');
     }
+
+    return template;
+
   };
 
   return (
@@ -67,15 +72,12 @@ function createTripEventListTemplate(tripEvent) {
 export default class EventsView extends AbstractView {
   #tripEvent = null;
   #handleEditClick = null;
-  #offers = null;
-  #destination = null;
+  #eventCommon = null;
 
-  constructor(tripEvent) {
+  constructor({ event, onEditClick, eventCommon }) {
     super();
-    const { event, onEditClick, offers, destination } = tripEvent;
+    this.#eventCommon = eventCommon;
     this.#tripEvent = event;
-    this.#offers = offers;
-    this.#destination = mockDestinations.find((item) => destination === item.id);
     this.#handleEditClick = onEditClick;
 
     this.element.querySelector('.event__rollup-btn')
@@ -83,11 +85,11 @@ export default class EventsView extends AbstractView {
   }
 
   get template() {
-    return createTripEventListTemplate(this.#tripEvent);
+    return createTripEventListTemplate(this.#tripEvent, this.#eventCommon);
   }
 
   #editClickHandler = (evt) => {
     evt.preventDefault();
-    this.#handleEditClick(this.#tripEvent, this.#offers, this.#destination);
+    this.#handleEditClick(this.#tripEvent);
   };
 }
