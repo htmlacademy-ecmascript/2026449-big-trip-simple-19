@@ -83,7 +83,7 @@ export default class TripPresenter {
     this.#newEventPresenter.init();
   }
 
-  #createNewEventPresenter () {
+  #createNewEventPresenter() {
     this.#newEventPresenter = new NewEventPresenter({
       eventListContainer: this.#tripComponent.element,
       eventCommon: this.#eventCommon,
@@ -215,7 +215,6 @@ export default class TripPresenter {
       tripEventContainer: this.#tripComponent.element,
       onModeChange: this.#handleModeChange,
       onDataChange: this.#handleViewAction,
-      apiModel: this.#apiModel,
       eventCommon: this.#eventCommon,
     });
 
@@ -224,7 +223,7 @@ export default class TripPresenter {
   }
 
   #clearBoard({ resetSortType = false } = {}) {
-    if(this.#newEventPresenter){
+    if (this.#newEventPresenter) {
       this.#newEventPresenter.destroy();
     }
     this.#eventPresenter.forEach((presenter) => presenter.destroy());
