@@ -20,13 +20,16 @@ export default class EventPresenter {
 
   #handleModeChange = null;
   #mode = Mode.DEFAULT;
-
+  #apiModel = null;
+  #eventCommon = null;
   #handleDataChange = null;
 
-  constructor({ tripEventContainer, onModeChange, onDataChange }) {
+  constructor({ tripEventContainer, eventCommon, onModeChange, onDataChange, apiModel }) {
+    this.#apiModel = apiModel;
     this.#tripEventContainer = tripEventContainer;
     this.#handleModeChange = onModeChange;
     this.#handleDataChange = onDataChange;
+    this.#eventCommon = eventCommon;
   }
 
   init(event) {
@@ -39,9 +42,8 @@ export default class EventPresenter {
 
     this.#eventComponent = new EventView({
       event: this.#event,
-      offers: this.#offers,
-      destination: this.#destination,
-      onEditClick: this.#handleEditClick
+      onEditClick: this.#handleEditClick,
+      eventCommon: this.#eventCommon,
     });
 
     this.#eventEditComponent = new EventEditView({
@@ -51,6 +53,8 @@ export default class EventPresenter {
       onFormSubmit: this.#formSubmitHandler,
       onFormClose: this.#closeEventEditFormHandler,
       onDeleteClick: this.#deleteClickHandler,
+      apiModel: this.#apiModel,
+      eventCommon: this.#eventCommon,
     });
 
 
@@ -68,6 +72,7 @@ export default class EventPresenter {
     if (this.#mode === Mode.EDITING) {
       {
         replace(this.#eventEditComponent, prevEventEditComponent);
+        this.#mode = Mode.DEFAULT;
       }
     }
 
@@ -112,19 +117,17 @@ export default class EventPresenter {
     this.#replaceEventToForm();
   };
 
-  #formSubmitHandler = (event, offers, destination) => {
+  #formSubmitHandler = (update) => {
     this.#handleDataChange(
       UserAction.UPDATE_EVENT,
       UpdateType.MINOR,
-      event,
-      offers,
-      destination);
-    this.#replaceFormToPoit();
+      update
+    );
   };
 
   #closeEventEditFormHandler = () => {
     this.#replaceFormToPoit();
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    this.#eventEditComponent.reset(this.#event);
   };
 
   #deleteClickHandler = (event) => {
@@ -134,4 +137,39 @@ export default class EventPresenter {
       event,
     );
   };
+
+  setSaving() {
+    if (this.#mode === Mode.EDITING) {
+      this.#eventEditComponent.updateElement({
+        isDisabled: true,
+        isSaving: true,
+      });
+    }
+  }
+
+  setDeleting() {
+    if (this.#mode === Mode.EDITING) {
+      this.#eventEditComponent.updateElement({
+        isDisabled: true,
+        isDeleting: true,
+      });
+    }
+  }
+
+  setAborting() {
+    if (this.#mode === Mode.DEFAULT) {
+      this.#eventComponent.shake();
+      return;
+    }
+
+    const resetFormState = () => {
+      this.#eventEditComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+
+    this.#eventEditComponent.shake(resetFormState);
+  }
 }

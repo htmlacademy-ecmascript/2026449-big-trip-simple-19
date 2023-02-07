@@ -1,16 +1,6 @@
 import { remove, render, RenderPosition } from '../framework/render.js';
 import EventEditView from '../view/event-edit-view.js';
-import { UserAction, UpdateType, EVENTS_TYPE } from '../const.js';
-
-const BLANK_EVENT = {
-  basePrice: 0,
-  dateFrom: new Date(),
-  dateTo: new Date(),
-  destination: -1,
-  id: 0,
-  offers: [],
-  type: EVENTS_TYPE[0]
-};
+import { UserAction, UpdateType } from '../const.js';
 
 export default class NewEventPresenter {
   #eventListContainer = null;
@@ -18,11 +8,13 @@ export default class NewEventPresenter {
   #handleDestroy = null;
 
   #eventEditComponent = null;
+  #eventCommon = null;
 
-  constructor({ eventListContainer, onDataChange, onDestroy }) {
+  constructor({ eventListContainer, eventCommon, onDataChange, onDestroy }) {
     this.#eventListContainer = eventListContainer;
     this.#handleDataChange = onDataChange;
     this.#handleDestroy = onDestroy;
+    this.#eventCommon = eventCommon;
   }
 
   init() {
@@ -31,15 +23,35 @@ export default class NewEventPresenter {
     }
 
     this.#eventEditComponent = new EventEditView({
+      eventCommon: this.#eventCommon,
       onFormSubmit: this.#handleFormSubmit,
       onDeleteClick: this.#handleDeleteClick,
-      event: BLANK_EVENT,
     });
 
     render(this.#eventEditComponent, this.#eventListContainer, RenderPosition.AFTERBEGIN);
 
     document.addEventListener('keydown', this.#escKeyDownHandler);
   }
+
+  setSaving() {
+    this.#eventEditComponent.updateElement({
+      isDisabled: true,
+      isSaving: true,
+    });
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this.#eventEditComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+
+    this.#eventEditComponent.shake(resetFormState);
+  }
+
 
   destroy() {
     if (this.#eventEditComponent === null) {
