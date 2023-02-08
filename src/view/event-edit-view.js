@@ -2,8 +2,8 @@ import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import { DATE_FORMAT } from '../const.js';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
-import dayjs from 'dayjs';
 import { EVENTS_TYPE } from '../const.js';
+import { formatDate } from '../utils/day.js';
 import he from 'he';
 
 export const BLANK_EVENT = {
@@ -76,8 +76,6 @@ function createEventEditTemplate(tripEvent, eventCommon) {
 
   const chooseDestination = eventCommon.allDestinations.map((element) => `<option value="${element.name}">`).join('');
 
-  const parceDateStart = dayjs(dateFrom);
-  const parceDateEnd = dayjs(dateTo);
   const eventDestination = eventCommon.allDestinations.find((item) => destination === item.id);
   const eventTypeOffer = eventCommon.allOffers.find((offer) => offer.type === type);
 
@@ -117,10 +115,10 @@ function createEventEditTemplate(tripEvent, eventCommon) {
       </div>
       <div class="event__field-group  event__field-group--time">
         <label class="visually-hidden" for="event-start-time-${id}">From</label>
-        <input class="event__input  event__input--time event-start-time" data-start-time id="event-start-time-${id}" type="text" name="event-start-time" value='${parceDateStart.format(DATE_FORMAT.FormTime)}' ${isDisabled ? 'disabled' : ''}>
+        <input class="event__input  event__input--time event-start-time" data-start-time id="event-start-time-${id}" type="text" name="event-start-time" value='${formatDate(dateFrom, DATE_FORMAT.FormTime)}' ${isDisabled ? 'disabled' : ''}>
         &mdash;
         <label class="visually-hidden" for="event-end-time-${id}">To</label>
-        <input class="event__input  event__input--time event-end-time" data-end-time id="event-end-time-${id}" type="text" name="event-end-time" value='${parceDateEnd.format(DATE_FORMAT.FormTime)}' ${isDisabled ? 'disabled' : ''}>
+        <input class="event__input  event__input--time event-end-time" data-end-time id="event-end-time-${id}" type="text" name="event-end-time" value='${formatDate(dateTo, DATE_FORMAT.FormTime)}' ${isDisabled ? 'disabled' : ''}>
       </div>
       <div class="event__field-group  event__field-group--price">
         <label class="event__label" for="event-price-${id}">
