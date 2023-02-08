@@ -24,7 +24,7 @@ const eventCommonModel = new EventCommonModel({
 const tripEventsContentElement = document.querySelector('.trip-events__content');
 const tripEventsSortElement = document.querySelector('.trip-events__sort');
 const filterContainer = document.querySelector('.trip-controls__filters');
-const filterContainerElement = document.querySelector('.trip-controls');
+const tripMain = document.querySelector('.trip-main');
 
 
 const tripPresenter = new TripPresenter({
@@ -62,5 +62,5 @@ Promise.all([
   apiModel.init(),
   eventCommonModel.init()])
   .then(() => {
-    render(newEventButtonComponent, filterContainerElement);
+    render(newEventButtonComponent, tripMain);
   });
