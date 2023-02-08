@@ -9,7 +9,6 @@ import he from 'he';
 export const BLANK_EVENT = {
   basePrice: 1,
   destination: -1,
-  id:0,
   offers: [],
   type: EVENTS_TYPE[0]
 };
@@ -106,7 +105,8 @@ function createEventEditTemplate(tripEvent, eventCommon) {
           id="event-destination-${id}"
           type="text"
           name="event-destination"
-          value='${eventDestination ? eventDestination.name : ''}'
+          required
+          value="${he.encode(eventDestination ? eventDestination.name : '')}"
           list="destination-list-${id}"
         >
         <datalist id="destination-list-${id}">
@@ -141,13 +141,16 @@ function createEventEditTemplate(tripEvent, eventCommon) {
     </header>
     <section class="event__details">
       <section class="event__section  event__section--offers">
-        <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+      ${!eventTypeOffer || !eventTypeOffer.offers || eventTypeOffer.offers.length === 0
+      ? ''
+      : '<h3 class="event__section-title  event__section-title--offers">Offers</h3>'}
         <div class="event__available-offers">
         ${createSectionOffersEditTemplate(eventTypeOffer, offers, type)}
         </div>
       </section>
       <section class="event__section  event__section--destination">
-        <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+      ${eventDestination ? '<h3 class="event__section-title  event__section-title--destination">Destination</h3>'
+      : '' }
         <p class="event__destination-description">${eventDestination ? eventDestination.description : ''}</p>
         <div class="event__photos-container">
           <div class="event__photos-tape">
@@ -164,29 +167,21 @@ function createEventEditTemplate(tripEvent, eventCommon) {
 export default class EventEditView extends AbstractStatefulView {
   #handleFormSubmit = null;
   #handleFormClose = null;
-  #offers = null;
-  #destination = null;
   #datepickerFrom = null;
   #datepickerTo = null;
   #handleDeleteClick = null;
-  #apiModel = null;
-  #tripEvent = null;
   #eventCommon = null;
 
   constructor({ event = {
     ...BLANK_EVENT,
     dateFrom: new Date(),
     dateTo: new Date(),
-  }, onFormSubmit, onFormClose, offers, destination, onDeleteClick, apiModel, eventCommon}) {
+  }, onFormSubmit, onFormClose, onDeleteClick, eventCommon}) {
     super();
-    this.#apiModel = apiModel;
-    this.#eventCommon = event;
     this._setState(EventEditView.parseEventToState(event));
     this.#eventCommon = eventCommon;
     this.#handleFormSubmit = onFormSubmit;
     this.#handleFormClose = onFormClose;
-    this.#offers = offers;
-    this.#destination = eventCommon.allDestinations.find((item) => destination === item.id);
     this.#handleDeleteClick = onDeleteClick;
 
     this._restoreHandlers();
@@ -206,8 +201,10 @@ export default class EventEditView extends AbstractStatefulView {
     }
     this.element.querySelector('.event__reset-btn')
       .addEventListener('click', this.#deleteClickHandler);
-    if (this.#eventCommon.allOffers.find((offerTypes) => offerTypes.type === this._state.type).offers)
-    {
+
+    const equalType = this.#eventCommon.allOffers.find((offerTypes) => offerTypes.type === this._state.type);
+
+    if (equalType && equalType.offers) {
       this.element.querySelector('.event__available-offers')
         .addEventListener('change', this.#offerChangeHandler);
     }
@@ -268,7 +265,7 @@ export default class EventEditView extends AbstractStatefulView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit(EventEditView.parseStateToPoint(this._state));
+    this.#handleFormSubmit(EventEditView.parseStateToEvent(this._state));
   };
 
   #formCloseHandler = () => {

@@ -15,17 +15,13 @@ export default class EventPresenter {
   #eventEditComponent = null;
 
   #event = null;
-  #offers = null;
-  #destination = null;
 
   #handleModeChange = null;
   #mode = Mode.DEFAULT;
-  #apiModel = null;
   #eventCommon = null;
   #handleDataChange = null;
 
-  constructor({ tripEventContainer, eventCommon, onModeChange, onDataChange, apiModel }) {
-    this.#apiModel = apiModel;
+  constructor({ tripEventContainer, eventCommon, onModeChange, onDataChange }) {
     this.#tripEventContainer = tripEventContainer;
     this.#handleModeChange = onModeChange;
     this.#handleDataChange = onDataChange;
@@ -33,10 +29,7 @@ export default class EventPresenter {
   }
 
   init(event) {
-    const { offers, destination } = event;
     this.#event = event;
-    this.#offers = offers;
-    this.#destination = destination;
     const prevEventComponent = this.#eventComponent;
     const prevEventEditComponent = this.#eventEditComponent;
 
@@ -48,12 +41,9 @@ export default class EventPresenter {
 
     this.#eventEditComponent = new EventEditView({
       event: this.#event,
-      offers: this.#offers,
-      destination: this.#destination,
       onFormSubmit: this.#formSubmitHandler,
       onFormClose: this.#closeEventEditFormHandler,
       onDeleteClick: this.#deleteClickHandler,
-      apiModel: this.#apiModel,
       eventCommon: this.#eventCommon,
     });
 

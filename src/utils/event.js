@@ -17,15 +17,15 @@ function getWeightForNullParam (a, b) {
 }
 
 function sortDate (eventA, eventB) {
-  const weight = getWeightForNullParam(eventA.start, eventB.start);
+  const weight = getWeightForNullParam(eventA.dateFrom, eventB.dateFrom);
 
-  return weight ?? dayjs(eventA.start).diff(dayjs(eventB.start));
+  return weight ?? dayjs(eventA.dateFrom).diff(dayjs(eventB.dateFrom));
 }
 
 function sortPrice (eventA, eventB) {
   const weight = getWeightForNullParam(eventA.price, eventB.price);
 
-  return weight ?? eventB.price - eventA.price;
+  return weight ?? eventB.basePrice - eventA.basePrice;
 }
 
 export { sortDate, sortPrice };
