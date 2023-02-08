@@ -31,7 +31,7 @@ export default class TripPresenter {
   #onNewEventDestroy = null;
   #isErrorLoading = false;
   #eventPresenter = new Map();
-  #ErrorLoadingView = new ErrorLoadingView();
+  #errorLoadingView = new ErrorLoadingView();
   #isEventLoading = true;
   #isEventCommonLoading = true;
   #eventCommonModel = null;
@@ -58,18 +58,18 @@ export default class TripPresenter {
   get events() {
     this.#filterType = this.#filterModel.filter;
     const events = this.#apiModel.events;
-    const filteredTasks = filter[this.#filterType](events);
+    const filteredEvents = filter[this.#filterType](events);
 
     switch (this.#currentSortType) {
       case SortType.DATE:
-        filteredTasks.sort(sortDate);
+        filteredEvents.sort(sortDate);
         break;
       case SortType.PRICE:
-        filteredTasks.sort(sortPrice);
+        filteredEvents.sort(sortPrice);
         break;
     }
 
-    return filteredTasks;
+    return filteredEvents;
   }
 
   init() {
@@ -207,7 +207,7 @@ export default class TripPresenter {
   }
 
   #renderErrorLoading() {
-    render(this.#ErrorLoadingView, this.#tripContainer);
+    render(this.#errorLoadingView, this.#tripContainer);
   }
 
   #renderEvent(event) {
