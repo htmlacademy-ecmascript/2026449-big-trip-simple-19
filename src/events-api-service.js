@@ -26,24 +26,6 @@ export default class EventsApiService extends ApiService {
     return parsedResponse;
   }
 
-  #adaptToServer(event) {
-    const adaptedEvent = {
-      ...event,
-      'base_price': +event.basePrice,
-      'date_from': event.dateFrom instanceof Date ? event.dateFrom.toISOString() : null,
-      'date_to': event.dateTo instanceof Date ? event.dateTo.toISOString() : null,
-      'destination': event.destination,
-      'offers': event.offers,
-    };
-
-    delete adaptedEvent['basePrice'];
-    delete adaptedEvent['dateFrom'];
-    delete adaptedEvent['dateTo'];
-
-
-    return adaptedEvent;
-  }
-
   async addEvent(event) {
     const response = await this._load({
       url: 'points',
@@ -64,5 +46,23 @@ export default class EventsApiService extends ApiService {
     });
 
     return response;
+  }
+
+  #adaptToServer(event) {
+    const adaptedEvent = {
+      ...event,
+      'base_price': +event.basePrice,
+      'date_from': event.dateFrom instanceof Date ? event.dateFrom.toISOString() : null,
+      'date_to': event.dateTo instanceof Date ? event.dateTo.toISOString() : null,
+      'destination': event.destination,
+      'offers': event.offers,
+    };
+
+    delete adaptedEvent['basePrice'];
+    delete adaptedEvent['dateFrom'];
+    delete adaptedEvent['dateTo'];
+
+
+    return adaptedEvent;
   }
 }

@@ -79,6 +79,8 @@ export default class NewEventPresenter {
   };
 
   #escKeyDownHandler = (evt) => {
+    // eslint-disable-next-line no-console
+    console.log(evt);
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
       this.destroy();

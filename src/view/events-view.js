@@ -32,8 +32,7 @@ function createTripEventListTemplate(tripEvent, eventCommon) {
   };
 
   return (
-    `<ul class="trip-events__list">
-      <li class="trip-events__item">
+    `<li class="trip-events__item">
         <div class="event">
           <time class="event__date" datetime="${formatDate(dateFrom, DATE_FORMAT.FullTime)}">
             ${formatDate(dateFrom, DATE_FORMAT.Day)}
@@ -64,8 +63,7 @@ function createTripEventListTemplate(tripEvent, eventCommon) {
             <span class="visually-hidden">Open event</span>
           </button>
         </div>
-      </li>
-    </ul>`
+      </li>`
   );
 }
 

@@ -82,6 +82,41 @@ export default class EventPresenter {
     }
   }
 
+  setSaving() {
+    if (this.#mode === Mode.EDITING) {
+      this.#eventEditComponent.updateElement({
+        isDisabled: true,
+        isSaving: true,
+      });
+    }
+  }
+
+  setDeleting() {
+    if (this.#mode === Mode.EDITING) {
+      this.#eventEditComponent.updateElement({
+        isDisabled: true,
+        isDeleting: true,
+      });
+    }
+  }
+
+  setAborting() {
+    if (this.#mode === Mode.DEFAULT) {
+      this.#eventComponent.shake();
+      return;
+    }
+
+    const resetFormState = () => {
+      this.#eventEditComponent.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+
+    this.#eventEditComponent.shake(resetFormState);
+  }
+
   #replaceEventToForm() {
     replace(this.#eventEditComponent, this.#eventComponent);
     document.addEventListener('keydown', this.#escKeyDownHandler);
@@ -127,39 +162,4 @@ export default class EventPresenter {
       event,
     );
   };
-
-  setSaving() {
-    if (this.#mode === Mode.EDITING) {
-      this.#eventEditComponent.updateElement({
-        isDisabled: true,
-        isSaving: true,
-      });
-    }
-  }
-
-  setDeleting() {
-    if (this.#mode === Mode.EDITING) {
-      this.#eventEditComponent.updateElement({
-        isDisabled: true,
-        isDeleting: true,
-      });
-    }
-  }
-
-  setAborting() {
-    if (this.#mode === Mode.DEFAULT) {
-      this.#eventComponent.shake();
-      return;
-    }
-
-    const resetFormState = () => {
-      this.#eventEditComponent.updateElement({
-        isDisabled: false,
-        isSaving: false,
-        isDeleting: false,
-      });
-    };
-
-    this.#eventEditComponent.shake(resetFormState);
-  }
 }
