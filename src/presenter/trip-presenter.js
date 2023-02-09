@@ -1,6 +1,6 @@
 import { render, RenderPosition, remove } from '../framework/render.js';
 import SortView from '../view/sort-view.js';
-import EventListView from '../view/events-list-view.js';
+import EventsListView from '../view/events-list-view.js';
 import NoEventsView from '../view/no-events-view.js';
 import EventPresenter from './event-presenter';
 import { SortType, UpdateType, UserAction, FilterType } from '../const.js';
@@ -22,7 +22,7 @@ export default class TripPresenter {
   #apiModel = null;
   #filterModel = null;
   #loadingComponent = new LoadingView();
-  #tripComponent = new EventListView();
+  #tripComponent = new EventsListView();
   #noEventComponent = null;
   #newEventPresenter = null;
   #sortComponent = null;
